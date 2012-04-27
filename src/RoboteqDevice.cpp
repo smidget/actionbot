@@ -28,8 +28,18 @@ bool RoboteqDevice::IsConnected()
 {
 	return handle != RQ_INVALID_HANDLE;
 }
-int RoboteqDevice::Connect(string port)
+//int RoboteqDevice::Connect()
+//{
+    //return Connect("/dev/tty.usbmodem22");
+//}
+
+int RoboteqDevice::Connect(char* port_c)
 {
+    stringstream ss;
+    string port;
+    ss << port_c;
+    ss >> port;
+
 	if(IsConnected())
 	{
 		cout<<"Device is connected, attempting to disconnect."<<endl;
@@ -66,6 +76,7 @@ int RoboteqDevice::Connect(string port)
 	if(response.length() < 12)
 	{
 		cout<<"failed (unrecognized version)."<<endl;
+        cout<<response<<endl;
 		Disconnect();
 		return RQ_UNRECOGNIZED_VERSION;
 	}
@@ -235,10 +246,10 @@ int RoboteqDevice::SetConfig(int configItem, int index, int value)
 
 	return RQ_SUCCESS;
 }
-int RoboteqDevice::SetConfig(int configItem, int value)
-{
-	return SetConfig(configItem, MISSING_VALUE, value);
-}
+//int RoboteqDevice::SetConfig(int configItem, int value)
+//{
+	//return SetConfig(configItem, MISSING_VALUE, value);
+//}
 
 int RoboteqDevice::SetCommand(int commandItem, int index, int value)
 {
@@ -269,14 +280,14 @@ int RoboteqDevice::SetCommand(int commandItem, int index, int value)
 
 	return RQ_SUCCESS;
 }
-int RoboteqDevice::SetCommand(int commandItem, int value)
-{
-	return SetCommand(commandItem, MISSING_VALUE, value);
-}
-int RoboteqDevice::SetCommand(int commandItem)
-{
-	return SetCommand(commandItem, MISSING_VALUE, MISSING_VALUE);
-}
+//int RoboteqDevice::SetCommand(int commandItem, int value)
+//{
+	//return SetCommand(commandItem, MISSING_VALUE, value);
+//}
+//int RoboteqDevice::SetCommand(int commandItem)
+//{
+	//return SetCommand(commandItem, MISSING_VALUE, MISSING_VALUE);
+//}
 
 int RoboteqDevice::GetConfig(int configItem, int index, int &result)
 {
@@ -305,42 +316,66 @@ int RoboteqDevice::GetConfig(int configItem, int index, int &result)
 
 	return RQ_SUCCESS;
 }
-int RoboteqDevice::GetConfig(int configItem, int &result)
-{
-	return GetConfig(configItem, 0, result);
-}
 
-int RoboteqDevice::GetValue(int operatingItem, int index, int &result)
+char* RoboteqDevice::GetName()
+{
+	string response;
+    char* result;
+	char command[10];
+	char args[50];
+
+	//if(index < 0)
+		//return RQ_INDEX_OUT_RANGE;
+
+	sprintf(command, "TELS");
+	//sprintf(args, "%i", index);
+
+	int status = IssueCommand("~", command, args, 10, response);
+	if(status != RQ_SUCCESS)
+		return "Obtaining telemetry data failed.";
+
+	//istringstream iss(response);
+	//iss>>result;
+
+    cout << response << endl;
+
+	//if(iss.fail())
+		//return RQ_GET_CONFIG_FAILED;
+
+	return (char*)response.c_str();
+}
+//int RoboteqDevice::GetConfig(int configItem, int &result)
+//{
+	//return GetConfig(configItem, 0, result);
+//}
+
+char* RoboteqDevice::GetValue(int operatingItem, int index)
 {
 	string response;
 	char command[10];
 	char args[50];
 
 	if(operatingItem < 0 || operatingItem > 255)
-		return RQ_INVALID_OPER_ITEM;
+		return "Invalid operating item";
 
 	if(index < 0)
-		return RQ_INDEX_OUT_RANGE;
+		return "Index out of range";
 
 	sprintf(command, "$%02X", operatingItem);
 	sprintf(args, "%i", index);
 
 	int status = IssueCommand("?", command, args, 10, response);
 	if(status != RQ_SUCCESS)
-		return status;
+		return "Getting value failed.";
 
-	istringstream iss(response);
-	iss>>result;
 
-	if(iss.fail())
-		return RQ_GET_VALUE_FAILED;
 
-	return RQ_SUCCESS;
+	return (char*)response.c_str();
 }
-int RoboteqDevice::GetValue(int operatingItem, int &result)
-{
-	return GetValue(operatingItem, 0, result);
-}
+//int RoboteqDevice::GetValue(int operatingItem, int &result)
+//{
+	//return GetValue(operatingItem, 0, result);
+//}
 
 
 string ReplaceString(string source, string find, string replacement)
