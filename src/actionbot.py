@@ -50,7 +50,13 @@ class Motor:
         return int(self.rd.GetValue(robochair._ABCNTR, 1))
 
     def get_rpm(self):
-        return int(self.rd.GetValue(robochair._ABSPEED, 1))
+        return ( int(self.rd.GetValue(robochair._ABSPEED, 1)),int(self.rd.GetValue(robochair._ABSPEED, 1)) )
+
+    def get_config(self, config):
+        return ( self.rd.GetConfig(config, 1), self.rd.GetConfig(config, 2) )
+
+    def get_value(self, config):
+        return ( int(self.rd.GetValue(config, 1)),int(self.rd.GetValue(config, 2)) )
 
 class RoboChair:
 
@@ -106,60 +112,66 @@ class RoboChair:
     for i in range(30):
         print r.send_command("Left", robochair._GO, 1, -300)
         print r.send_command("Left", robochair._GO, 2, -300)
-        print r.send_command("Right", robochair._GO, 1, -300)
-        print r.send_command("Right", robochair._GO, 2, -300)
+        print r.send_command("Right", robochair._GO, 1, 300)
+        print r.send_command("Right", robochair._GO, 2, 300)
 
     time.sleep(2)
 
+  # Have this maybe step down into known intervals instead of percents?
   def rotate_chair(self, speed, direction, runtime, num_revs):
     start_time = time.time()
     rot_speed = chair_speed[speed]
     ticks_per_turn = chair_ticks_per_rev
+    decel_ticks = 7000.0
+    target_decel_speed = 550.0
 
     if direction == "ccw" or direction == "left" or direction == "l":
         rot_speed = -rot_speed
         num_revs = -num_revs
+        target_decel_speed = -target_decel_speed
 
+    start_rot = rot_speed
+    decel_slope = -(start_rot - target_decel_speed) / decel_ticks
     start_ticks = r.get_revolutions("Chair")
+    stop_ticks = start_ticks + (ticks_per_turn * num_revs)
     #while time.time() - start_time < runtime:
 
     curr_ticks = r.get_revolutions("Chair")
-    while curr_ticks - start_ticks < ticks_per_turn * num_revs:
-        if curr_ticks - start_ticks < ticks_per_turn * num_revs - 3500:
-            r.send_command("Chair", robochair._GO, 1, rot_speed)
-        else:
-            rot_speed = int(rot_speed * 0.95)
-            if rot_speed < 150:
-                r.send_command("Chair", robochair._GO, 1, 150)
 
-            if rot_speed < 15:
-                break
+    print "Turning chair"
+    i = 0
+    ticks_remaining = (ticks_per_turn * num_revs) - (curr_ticks - start_ticks)
+    while abs(ticks_remaining) > 0:
+        ticks_remaining = (ticks_per_turn * num_revs) - (curr_ticks - start_ticks)
+        if abs(ticks_remaining) < 100:
+            self.send_go("Chair", 0)
+            break
+        elif abs(ticks_remaining) < decel_ticks: # Decelerate over 1/3 of the final turn
+            rot_speed = int(decel_slope * (decel_ticks - abs(ticks_remaining)) + start_rot)
 
-            print rot_speed
-            r.send_command("Chair", robochair._GO, 1, rot_speed)
+        print rot_speed
+        self.send_go("Chair", rot_speed)
 
         curr_ticks = r.get_revolutions("Chair")
-    r.send_command("Chair", robochair._GO, 1, 0)
+        i += 1
 
+    self.send_go("Chair", 0)
     print curr_ticks - start_ticks
 
     #r.send_command("Chair", reobotchair._ESTOP, 1)
 
-    time.sleep(5)
+    #time.sleep(5)
     end_ticks = r.get_revolutions("Chair")
 
     print "Total ticks = ", end_ticks - start_ticks
     print time.time() - start_time
     #time.sleep(2)
 
-  def accelerate_chair(self, target_speed, time):
-      pass
-
-  #def get_telemetry(self):
-    #return self.rd.Get
-
   def send_command(self, motor_name, command, index, value):
     return self.motors[motor_name].send_command(command, index, value)
+
+  def send_go(self, motorname, value):
+      self.send_command(motorname, robochair._GO, 1, value)
 
   def get_revolutions(self, motor_name):
       return self.motors[motor_name].get_revolutions()
@@ -167,19 +179,30 @@ class RoboChair:
   def get_rpm(self, motor_name):
       return self.motors[motor_name].get_rpm()
 
-  def get_config(self, config, board):
-    return self.rd.GetConfig(robochair._PMOD, 1)
+  def get_config(self, motor_name, config):
+      return self.motors[motor_name].get_config(config)
 
-  def move(direction, **kwargs):
+  def move_base(direction, **kwargs):
     distance = kwargs.get('distance', None)
     speed = kwargs.get('speed', None)
     time = kwargs.get('time', None)
 
     # Need two of the above vars to be defined in order to do anything
 
-  def rotate(degrees, speed):
+  def turn_base(self, degrees, speed):
     # Negative rotation is ccw, positive is cw
-    pass
+    #for i in range(100):
+    for i in range(50):
+        r.send_command("Left", robochair._GO, 1, -2000)
+        r.send_command("Left", robochair._GO, 2, -2000)
+        #r.send_command("Right", robochair._GO, -1024, 500)
+        r.send_command("Right", robochair._GO, 1, 2000)
+        r.send_command("Right", robochair._GO, 2, 2000)
+
+        print "LEFT MOTOR", self.get_rpm("Left")
+        #print r.send_command("Left", robochair._GO, 2, -400)
+        print "RIGHT MOTOR", self.get_rpm("Right")
+        #print r.send_command("Right", robochair._GO, 2, -40)
 
   def wait_for_input(self):
     pass
@@ -221,11 +244,18 @@ r.setup()
 #r.sleep()
 #print r.send_command(robochair._GO, 2, 2000)
 #r.drive_forward()
-r.rotate_chair("fast2", "cw", 10, 2)
+#for i in range(30):
+    #r.rotate_chair("fast", "ccw", 10, 0.5)
+    #time.sleep(2)
+    #r.rotate_chair("fast", "cw", 10, 0.5)
+    #time.sleep(5)
+#r.rotate_chair("fast", "ccw", 10, 0.5)
+print r.get_config("Left", robochair._MAC)
+#r.turn_base(0,0)
 #while True:
     #pass
     #print r.get_revolutions("Chair")
-print r.get_revolutions("Chair")
+#print r.get_revolutions("Chair")
 #print r.send_command(robochair._ESTOP, 0, 1)
 r.shutdown()
 print("shut down")

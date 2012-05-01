@@ -3607,7 +3607,7 @@ SWIGINTERN PyObject *_wrap_RoboteqDevice_GetConfig(PyObject *SWIGUNUSEDPARM(self
   PyObject * obj0 = 0 ;
   PyObject * obj1 = 0 ;
   PyObject * obj2 = 0 ;
-  int result;
+  char *result = 0 ;
   
   arg4 = &temp4;
   if (!PyArg_ParseTuple(args,(char *)"OOO:RoboteqDevice_GetConfig",&obj0,&obj1,&obj2)) SWIG_fail;
@@ -3626,8 +3626,8 @@ SWIGINTERN PyObject *_wrap_RoboteqDevice_GetConfig(PyObject *SWIGUNUSEDPARM(self
     SWIG_exception_fail(SWIG_ArgError(ecode3), "in method '" "RoboteqDevice_GetConfig" "', argument " "3"" of type '" "int""'");
   } 
   arg3 = static_cast< int >(val3);
-  result = (int)(arg1)->GetConfig(arg2,arg3,*arg4);
-  resultobj = SWIG_From_int(static_cast< int >(result));
+  result = (char *)(arg1)->GetConfig(arg2,arg3,*arg4);
+  resultobj = SWIG_FromCharPtr((const char *)result);
   if (SWIG_IsTmpObj(res4)) {
     resultobj = SWIG_Python_AppendOutput(resultobj, SWIG_From_int((*arg4)));
   } else {

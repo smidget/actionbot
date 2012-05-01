@@ -35,7 +35,7 @@ public:
 	//int SetCommand(int commandItem, int value);
 	//int SetCommand(int commandItem);
 
-	int GetConfig(int configItem, int index, int &result);
+	char* GetConfig(int configItem, int index, int &result);
 	char* GetName();
 	//int GetConfig(int configItem, int &result);
 

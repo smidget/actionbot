@@ -175,6 +175,7 @@ int RoboteqDevice::IssueCommand(string commandType, string command, string args,
 	string read;
 	response = "";
 
+    //cout << commandType << " " << command.c_str() << "\n";
 	if(args == "")
 		status = Write(commandType + command + "\r");
 	else
@@ -231,6 +232,7 @@ int RoboteqDevice::SetConfig(int configItem, int index, int value)
 	sprintf(args, "%i %i", index, value);
 	if(index == MISSING_VALUE)
 	{
+        cout << "Got missing value, not sending index";
 		sprintf(args, "%i", value);
 		index = 0;
 	}
@@ -264,6 +266,7 @@ int RoboteqDevice::SetCommand(int commandItem, int index, int value)
 	sprintf(args, "%i %i", index, value);
 	if(index == MISSING_VALUE)
 	{
+        cout << "Got missing value, not sending index";
 		if(value != MISSING_VALUE)
 			sprintf(args, "%i", value);
 		index = 0;
@@ -289,32 +292,32 @@ int RoboteqDevice::SetCommand(int commandItem, int index, int value)
 	//return SetCommand(commandItem, MISSING_VALUE, MISSING_VALUE);
 //}
 
-int RoboteqDevice::GetConfig(int configItem, int index, int &result)
+char* RoboteqDevice::GetConfig(int configItem, int index, int &result)
 {
 	string response;
 	char command[10];
 	char args[50];
 
-	if(configItem < 0 || configItem > 255)
-		return RQ_INVALID_CONFIG_ITEM;
+	//if(configItem < 0 || configItem > 255)
+		//return RQ_INVALID_CONFIG_ITEM;
 
-	if(index < 0)
-		return RQ_INDEX_OUT_RANGE;
+	//if(index < 0)
+		//return RQ_INDEX_OUT_RANGE;
 
 	sprintf(command, "$%02X", configItem);
 	sprintf(args, "%i", index);
 
 	int status = IssueCommand("~", command, args, 10, response);
 	if(status != RQ_SUCCESS)
-		return status;
+		return "Getting configuration failed.";
 
-	istringstream iss(response);
-	iss>>result;
+	//istringstream iss(response);
+	//iss>>result;
 
-	if(iss.fail())
-		return RQ_GET_CONFIG_FAILED;
+	//if(iss.fail())
+		//return RQ_GET_CONFIG_FAILED;
 
-	return RQ_SUCCESS;
+	return (char*)response.c_str();
 }
 
 char* RoboteqDevice::GetName()
